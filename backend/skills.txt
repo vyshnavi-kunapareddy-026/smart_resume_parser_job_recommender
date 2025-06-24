@@ -3,8 +3,15 @@ Java
 JavaScript
 C++
 SQL
+MySQL
+PostgreSQL
+MSSQL
+NumPy
+Pandas
+scikit-learn
 HTML
 CSS
+PHP
 React
 Flask
 Django
@@ -14,6 +21,7 @@ NumPy
 Machine Learning
 Deep Learning
 Communication
+Computer Networks
 Teamwork
 Problem Solving
 AWS

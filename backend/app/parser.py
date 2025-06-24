@@ -119,6 +119,7 @@ def parse_resume(filename, content, skills_list):
 
     # Rule-based skill matching
     skills = extract_skills(text, skills_list)
+    print(f"Extracted skills in parser: {skills} type {type(skills)}")  # Debugging line
 
     return {
         "filename": filename,

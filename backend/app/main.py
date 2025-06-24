@@ -37,16 +37,15 @@ async def upload_resume(file: UploadFile = File(...)):
     content = await file.read()
     skills_list = load_skills()
     parsed_data = parse_resume(file.filename, content, skills_list)
-     # Generate and store in-memory ID
+
+    # Generate and store resume layout sections by ID (used for chatbot later)
     resume_id = str(uuid.uuid4())
-    resume_store[resume_id] = parsed_data['layout_sections']
+    resume_store[resume_id] = parsed_data
 
-    if parsed_data.get("skills"):
-        jobs = load_jobs()
-        recommendations = recommend_jobs(parsed_data["skills"], jobs)
-        parsed_data["recommended_jobs"] = recommendations
-
-    return {"resume_id": resume_id, "parsed": parsed_data } # You can include summary, etc.
+    return {
+        "resume_id": resume_id,
+        "parsed": parsed_data
+    }
 
 @app.post("/chat")
 def chat_with_resume(
@@ -68,6 +67,7 @@ def recommend_jobs_by_resume(resume_id: str):
         raise HTTPException(status_code=404, detail="Resume not found.")
 
     skills = parsed_data.get("skills", [])
+    print(f"Extracted skills for recommendation: {skills}, type {type(skills)}")  # Debugging line
     job_data = load_jobs()  # from recommender.py
     recommendations = recommend_jobs(skills, job_data)
     return {"resume_id": resume_id, "recommended_jobs": recommendations}
