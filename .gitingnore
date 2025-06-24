@@ -1,0 +1,36 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.so
+*.log
+
+# Environment
+.env
+.venv/
+venv/
+env/
+*.env
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Resume PDFs and uploads
+resumes/
+*.pdf
+
+# Model/transformers cache
+.cache/
+*.pt
+
+# PyMuPDF / NLTK data
+nltk_data/
+stopwords/
+*.xz
+
+# VSCode / PyCharm / IDE config
+.idea/
+.vscode/
+
+# System files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "title": "Data Scientist",
+    "company": "ABC Corp",
+    "location": "Hyderabad",
+    "required_skills": ["Python", "Pandas", "Machine Learning", "SQL"],
+    "description": "Work on predictive models using real-world data."
+  },
+  {
+    "id": 2,
+    "title": "Backend Developer",
+    "company": "TechX",
+    "location": "Remote",
+    "required_skills": ["Python", "FastAPI", "Docker", "PostgreSQL"],
+    "description": "Build and deploy scalable backend APIs."
+  },
+  {
+    "id": 3,
+    "title": "AI Research Intern",
+    "company": "DeepVision",
+    "location": "Bangalore",
+    "required_skills": ["Python", "PyTorch", "Deep Learning", "Research"],
+    "description": "Work on experimental AI models."
+  }
+]

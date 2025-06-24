@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+python-multipart
+PyMuPDF
+spacy
+scikit-learn
+nltk
+transformers
+torch
+joblib
+requests

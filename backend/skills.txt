@@ -1,0 +1,21 @@
+Python
+Java
+JavaScript
+C++
+SQL
+HTML
+CSS
+React
+Flask
+Django
+FastAPI
+Pandas
+NumPy
+Machine Learning
+Deep Learning
+Communication
+Teamwork
+Problem Solving
+AWS
+Docker
+Kubernetes
