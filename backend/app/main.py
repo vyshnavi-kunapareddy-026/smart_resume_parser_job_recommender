@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import HTTPException
 from .parser import parse_resume
 from .recommender import load_jobs, recommend_jobs  # add this at the top
 from fastapi import Body
@@ -59,3 +60,14 @@ def chat_with_resume(
 
     answer = resume_chatbot(question, layout)
     return {"answer": answer}
+
+@app.post("/recommend-jobs/")
+def recommend_jobs_by_resume(resume_id: str):
+    parsed_data = resume_store.get(resume_id)
+    if not parsed_data:
+        raise HTTPException(status_code=404, detail="Resume not found.")
+
+    skills = parsed_data.get("skills", [])
+    job_data = load_jobs()  # from recommender.py
+    recommendations = recommend_jobs(skills, job_data)
+    return {"resume_id": resume_id, "recommended_jobs": recommendations}
