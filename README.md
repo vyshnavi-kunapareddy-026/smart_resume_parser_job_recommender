@@ -1,130 +1,106 @@
-# 🧠 Smart Resume Parser & Recommender
+# 🧠 Smart Resume Parser + Job Recommender
 
-A FastAPI-powered backend system that extracts structured information from resumes, generates summaries using an LLM, and provides a chatbot interface to ask questions about the uploaded resume.
-
----
+This project is an end-to-end resume parsing and job recommendation system built using **FastAPI**. It extracts structured data from resumes (PDFs), summarizes key information, and recommends jobs in real time based on skills and experience.
 
 ## 🚀 Features
 
-- 📄 Upload a resume (PDF)
-- 🧠 Extract structured information:
-  - Name, Email, Phone, LinkedIn, GitHub
-  - Skills (matched from a predefined list)
-  - Education Institutes
-- 🔍 Layout-based section parsing (about, skills, experience, education) using PyMuPDF
-- Named Entity Recognition using transformer models
-- Job recommendations with match score
-- 💬 Chatbot endpoint for querying resume content
-- 🗃️ In-memory session support using `resume_id` (for later chat queries)
-- FastAPI backend with modular code structure
+- 📄 **Resume Parsing**: Extracts name, contact info, education, experience, skills, and more from resumes using layout-aware PyMuPDF and NER models.
+- 🔍 **Job Recommendation**: Fetches live jobs using the **Adzuna API** and ranks them based on skill/experience match.
+- 🤖 **Named Entity Recognition**: Utilizes `Jean-Baptiste/roberta-large-ner-english` for name, education, and experience extraction.
+- 🧠 **Skill Matching**: Matches resume skills with job descriptions using weighted scoring.
+- 💬 **Resume Summary (LLM ready)**: Summarizes the parsed resume (future enhancement with LLMs).
+- 🖥️ **Web Interface**: Upload resumes and view results visually in your browser.
+- 🛠️ Built with **FastAPI**, **spaCy**, **transformers**, **PyMuPDF**, and more.
 
----
-
-## 📂 Project Structure
+## 📁 Project Structure
 
 ```
 smart_resume_parser_job_recommender/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                      # FastAPI app
-│   │   ├── parser.py                    # Resume parsing logic
-│   │   ├── recommender.py               # Job matching logic
-│   │   ├── state.py                     # In-memory store for resume content
+│   │   ├── main.py
+│   │   ├── parser.py
+│   │   ├── recommender.py
 │   │   ├── utils/
-│   │   │   ├── summarizer.py            # LLM-based summarization logic
-│   │   │   ├── chatbot.py               # Q&A chatbot interface
-│   │   │   └── layout_section_extractor.py  # Extracts structured resume sections
-│   └── requirements.txt
-├── resumes/                              # Folder to store uploaded resumes
-├── notebooks/                            # Jupyter notebooks for experiments/trials
+│   │   │   ├── layout_section_extractor.py
+│   │   └── templates/
+│   │       ├── index.html
+│   │       └── results.html
+├── .env
+├── requirements.txt
 └── README.md
-
 ```
 
----
+## ⚙️ How to Run Locally
 
-## ⚙️ Setup Instructions
-
+1. **Clone the repository**:
 ```bash
-# 1. Clone the repo
-git clone https://github.com/your-username/smart_resume_recommender.git
-cd smart_resume_recommender/backend
+git clone https://github.com/yourusername/smart_resume_parser_job_recommender.git
+cd smart_resume_parser_job_recommender/backend
+```
 
-# 2. Create a virtual environment (optional)
+2. **Set up environment**:
+```bash
 python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-
-# 3. Install dependencies
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
+python -m nltk.downloader stopwords
+python -m spacy download en_core_web_sm
+```
 
-# 4. Run the FastAPI app
+3. **Add your API key** in `.env` file:
+```
+ADZUNA_APP_ID=your_app_id
+ADZUNA_APP_KEY=your_app_key
+```
+
+4. **Run the app**:
+```bash
 uvicorn app.main:app --reload
 ```
 
----
+5. **Visit**: http://127.0.0.1:8000/upload
 
-## 📬 API Endpoints
 
-| Method | Endpoint         | Description                                  |
-|--------|------------------|----------------------------------------------|
-| POST   | `/upload-resume/`| Upload a PDF resume, extract and return info |
-| POST   | `/chat`          | Ask a question based on uploaded resume      |
+## 🛡️ Security Note
 
-### Example: `/upload-resume/` Response
+Make sure to **hide your `.env`** when pushing to GitHub. Add to `.gitignore`:
 
-```json
-{
-  "resume_id": "<uuid>",
-  "parsed": {
-    "filename": "...",
-    "name": "...",
-    "email": "...",
-    "linkedin": "...",
-    "skills": [...],
-    "education": [...],
-    "text_snippet": "...",
-    "layout_sections": {
-      "header": "...",
-      "about": "...",
-      "skills": "...",
-      "experience": "...",
-      "education": "...",
-      "additional_information": "..."
-    },
-    "recommended_jobs": [
-      {
-        "title": "...",
-        "company": "...",
-        "location": "...",
-        "match_score": 50,
-        "matched_skills": ["..."]
-      }
-    ]
-  }
-}
+```
+.env
+*.ipynb
+.ipynb_checkpoints/
+```
+
+## 🧪 Example Use Case
+
+1. Upload your resume in PDF.
+2. Parsed results and skills shown.
+3. Get jobs matching your skills and experience.
+4. Click "Details" to see job descriptions.
+
+## 📦 Requirements
+
+```
+fastapi
+uvicorn
+python-multipart
+PyMuPDF
+spacy
+scikit-learn
+nltk
+transformers
+torch
+joblib
+requests
+python-dotenv
+```
+
+Also include in `requirements.txt`:
+```
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 ```
 
 ---
 
-## 🔐 Model Info & Access
-
-- Uses `transformers` from HuggingFace
-- You’ll need a HuggingFace token with access to gated/public models
-- Example model: `google/flan-t5-small` for summarization, `mistralai/Mistral-7B-Instruct-v0.2` if you switch to stronger LLMs
-
----
-
-## 📌 TODO (Next Steps)
-
-- 💼 Improve job recommendation logic in `recommender.py`
-- 🗄️ Use PostgreSQL or SQLite to store uploaded resume metadata
-- 🌐 Add frontend (optional)
-
----
-
-
----
-
-## 📄 License
-
-MIT License
+Made with ❤️ by Vyshnavi
