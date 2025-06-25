@@ -62,15 +62,7 @@ uvicorn app.main:app --reload
 5. **Visit**: http://127.0.0.1:8000/upload
 
 
-## 🛡️ Security Note
 
-Make sure to **hide your `.env`** when pushing to GitHub. Add to `.gitignore`:
-
-```
-.env
-*.ipynb
-.ipynb_checkpoints/
-```
 
 ## 🧪 Example Use Case
 
