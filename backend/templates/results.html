@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Parsed Resume</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+
+    h1, h2 {
+      color: #333;
+    }
+
+    section {
+      background: #fff;
+      padding: 20px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    pre {
+      background-color: #eee;
+      padding: 10px;
+      white-space: pre-wrap;
+    }
+
+    .job-card {
+      background: #ffffff;
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .job-card h3 {
+      margin: 0 0 5px;
+    }
+
+    .job-card p {
+      margin: 5px 0;
+      color: #444;
+    }
+
+    .job-card a {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background-color: #28a745;
+      color: white;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .job-card a:hover {
+      background-color: #218838;
+    }
+
+    .loader {
+      display: none;
+      text-align: center;
+      margin: 15px 0;
+    }
+
+    .loader div {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007bff;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error-message {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Parsed Resume Details</h1>
+
+  <section>
+    <h2>Basic Info</h2>
+    <p><strong>Name:</strong> {{ parsed.name }}</p>
+    <p><strong>Email:</strong> {{ parsed.email }}</p>
+    <p><strong>Phone:</strong> {{ parsed.phone }}</p>
+  </section>
+
+  <section>
+    <h2>Skills</h2>
+    <ul>
+      {% for skill in parsed.skills %}
+      <li>{{ skill }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section>
+    <h2>Education</h2>
+    <pre>
+{{ parsed.education if parsed.education else parsed.layout_sections.education or "No education info found." }}
+    </pre>
+  </section>
+
+  <section>
+    <h2>Experience</h2>
+    <pre>
+{{ parsed.experience if parsed.experience else parsed.layout_sections.experience or "No experience info found." }}
+    </pre>
+  </section>
+
+  <section>
+    <h2>Chat with Resume</h2>
+    <input type="text" id="chatInput" placeholder="Ask something about the resume..." />
+    <button onclick="chat()">Send</button>
+    <pre id="chatResponse"></pre>
+  </section>
+
+  <section>
+    <h2>Get Job Recommendations</h2>
+    <form id="jobForm">
+      <input type="text" id="role" placeholder="Enter role (e.g. Data Scientist)" required />
+      <input type="text" id="location" placeholder="Enter location (optional)" />
+      <input type="text" id="experience" placeholder="Experience level (e.g. fresher, junior)" />
+      <button type="submit">Get Recommended Jobs</button>
+    </form>
+    <div class="loader" id="jobLoader"><div></div></div>
+    <div class="error-message" id="jobError"></div>
+    <div id="jobResults"></div>
+  </section>
+
+  <section>
+    <h2>Or Search Jobs Directly</h2>
+    <form id="searchForm">
+      <input type="text" id="searchRole" placeholder="Search role (e.g. Python Developer)" required />
+      <input type="text" id="searchLocation" placeholder="Location (optional)" />
+      <input type="text" id="searchExperience" placeholder="Experience level" />
+      <button type="submit">Search Jobs</button>
+    </form>
+    <div class="loader" id="searchLoader"><div></div></div>
+    <div class="error-message" id="searchError"></div>
+    <div id="searchResults"></div>
+  </section>
+
+  <script>
+    const resumeId = "{{ resume_id }}";
+
+    async function chat() {
+      const question = document.getElementById('chatInput').value;
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume_id: resumeId, question: question })
+      });
+      const data = await res.json();
+      document.getElementById('chatResponse').innerText = data.answer || "Error.";
+    }
+
+    function renderJobs(jobs) {
+    if (!jobs || jobs.length === 0) return "<p>No jobs found.</p>";
+
+    return jobs.map((job, index) => {
+        const hasDetails = job.description || job.matched_skills;
+
+        return `
+        <div class="job-card">
+            <h3>${job.title}</h3>
+            <p><strong>Company:</strong> ${job.company || 'N/A'}</p>
+            <p><strong>Location:</strong> ${job.location || 'N/A'}</p>
+            ${job.match_score !== undefined ? `<p><strong>Match Score:</strong> ${job.match_score}%</p>` : ""}
+            <a href="${job.job_url}" target="_blank">Apply Now</a>
+
+            ${hasDetails ? `
+            <button onclick="toggleDetails(${index})" style="margin-left: 10px;">Details</button>
+            <div id="details-${index}" style="display:none; margin-top:10px;">
+                ${job.matched_skills ? `
+                <p><strong>Matched Skills:</strong></p>
+                <ul>${job.matched_skills.map(skill => `<li>${skill}</li>`).join('')}</ul>
+                ` : ""}
+                ${job.description ? `<p><strong>Description:</strong><br>${job.description}</p>` : ""}
+            </div>
+            ` : ""}
+        </div>
+        `;
+    }).join("");
+    }
+
+    function toggleDetails(index) {
+        const detailsDiv = document.getElementById(`details-${index}`);
+        if (detailsDiv.style.display === "none") {
+            detailsDiv.style.display = "block";
+        } else {
+            detailsDiv.style.display = "none";
+        }
+        }
+
+
+    // Job Recommendations
+    const jobForm = document.getElementById("jobForm");
+    const jobResults = document.getElementById("jobResults");
+    const jobLoader = document.getElementById("jobLoader");
+    const jobError = document.getElementById("jobError");
+
+    jobForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      jobLoader.style.display = "block";
+      jobResults.innerHTML = "";
+      jobError.textContent = "";
+
+      const role = document.getElementById("role").value;
+      const location = document.getElementById("location").value || "India";
+      const experience = document.getElementById("experience").value;
+
+      try {
+        const res = await fetch(`/recommend-jobs/?resume_id=${resumeId}&role=${role}&location=${location}&experience=${experience}`);
+        if (!res.ok) throw new Error("Failed to fetch job recommendations.");
+        const data = await res.json();
+        jobResults.innerHTML = renderJobs(data.recommendations);
+      } catch (err) {
+        jobError.textContent = err.message || "Something went wrong.";
+      } finally {
+        jobLoader.style.display = "none";
+      }
+    });
+
+    // Job Search
+    const searchForm = document.getElementById("searchForm");
+    const searchResults = document.getElementById("searchResults");
+    const searchLoader = document.getElementById("searchLoader");
+    const searchError = document.getElementById("searchError");
+
+    searchForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      searchLoader.style.display = "block";
+      searchResults.innerHTML = "";
+      searchError.textContent = "";
+
+      const role = document.getElementById("searchRole").value;
+      const location = document.getElementById("searchLocation").value || "India";
+      const experience = document.getElementById("searchExperience").value;
+
+      try {
+        const res = await fetch(`/search-jobs/?role=${role}&location=${location}&experience=${experience}`);
+        if (!res.ok) throw new Error("Failed to fetch search results.");
+        const data = await res.json();
+        searchResults.innerHTML = renderJobs(data.results);
+      } catch (err) {
+        searchError.textContent = err.message || "Something went wrong.";
+      } finally {
+        searchLoader.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -47,10 +47,20 @@ def recommend_jobs(resume_skills, job_data, top_n=10):
         missing_skills = [skill for skill in job_description_lower.split() if skill in skill_weights and skill not in resume_skills_set]
 
         company = job.get("company")
-        company_name = company if isinstance(company, str) else company.get("display_name", "Unknown")
+        if isinstance(company, str):
+            company_name = company
+        elif isinstance(company, dict):
+            company_name = company.get("display_name", "Unknown")
+        else:
+            company_name = "Unknown"
 
         location = job.get("location")
-        location_name = location if isinstance(location, str) else location.get("display_name", "N/A")
+        if isinstance(location, str):
+            location_name = location
+        elif isinstance(location, dict):
+            location_name = location.get("display_name", "N/A")
+        else:
+            location_name = "N/A"
 
         recommendations.append({
             "title": job.get("title"),
