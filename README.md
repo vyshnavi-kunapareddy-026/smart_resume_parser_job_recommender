@@ -71,28 +71,6 @@ uvicorn app.main:app --reload
 3. Get jobs matching your skills and experience.
 4. Click "Details" to see job descriptions.
 
-## 📦 Requirements
 
-```
-fastapi
-uvicorn
-python-multipart
-PyMuPDF
-spacy
-scikit-learn
-nltk
-transformers
-torch
-joblib
-requests
-python-dotenv
-```
-
-Also include in `requirements.txt`:
-```
-en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
-```
-
----
 
 Made with ❤️ by Vyshnavi
