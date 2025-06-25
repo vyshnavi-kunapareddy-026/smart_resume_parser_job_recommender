@@ -61,7 +61,7 @@ def extract_links(text, extra_links=None):
 
 
 
-
+'''
 def extract_name_and_education_with_model(ner_pipeline, resume_json, label_fallback=True):
     header_text = resume_json.get("header", "")
     education_text = resume_json.get("education", "")
@@ -84,7 +84,42 @@ def extract_name_and_education_with_model(ner_pipeline, resume_json, label_fallb
     org_tokens = [e['word'] for e in entities_edu if e["entity_group"] == "ORG"]
     education_orgs = list(set(org_tokens))
 
-    return name, education_orgs
+    return name, education_orgs'''
+
+def extract_name_education_experience_with_model(
+    ner_pipeline, resume_json, full_text="", label_fallback=True
+):
+    header_text = resume_json.get("header", "")
+    education_text = resume_json.get("education", "")
+    experience_text = resume_json.get("experience", "")
+
+    # Run NER separately on each relevant part
+    entities_header = ner_pipeline(header_text)
+    entities_education = ner_pipeline(education_text) if education_text else []
+    entities_experience = ner_pipeline(experience_text) if experience_text else []
+
+    # ----- Name Extraction from header -----
+    name_tokens = [e['word'] for e in entities_header if e["entity_group"].upper() == "PER"]
+    if not name_tokens and label_fallback:
+        fallback = [
+            w for w in header_text.split('\n')[0].strip().split()
+            if w.isalpha() and w.isupper()
+        ]
+        name_tokens = fallback
+    name = " ".join(name_tokens).strip()
+
+    # ----- Education Organizations from education section -----
+    education_orgs = list({
+        e['word'] for e in entities_education if e["entity_group"].upper() == "ORG"
+    })
+
+    # ----- Experience Organizations from experience section -----
+    experience_orgs = list({
+        e['word'] for e in entities_experience if e["entity_group"].upper() == "ORG"
+    })
+
+    return name, education_orgs, experience_orgs
+
 
 def extract_skills(text, skills_list):
     text = text.lower()
@@ -115,7 +150,10 @@ def parse_resume(filename, content, skills_list):
     links = extract_links(text, extracted_links)
 
     # NER-based name and education
-    name_general, edu_general = extract_name_and_education_with_model(ner_pipeline, resume_json)
+    # name_general, edu_general = extract_name_and_education_with_model(ner_pipeline, resume_json)
+    name_general, edu_general, experience_keywords = extract_name_education_experience_with_model(
+    ner_pipeline, resume_json, text
+    )
 
     # Rule-based skill matching
     skills = extract_skills(text, skills_list)
@@ -130,6 +168,7 @@ def parse_resume(filename, content, skills_list):
         "github": links["github"],
         "websites": links["websites"],
         "education": edu_general,
+        "experience_keywords": experience_keywords,
         "skills": skills,
         "text_snippet": text[:500],         # For debug or preview
         "layout_sections": layout_sections  # New addition,

@@ -31,7 +31,41 @@ def clean_text(text):
     filtered = [w for w in words if w.lower() not in STOP_WORDS]
     return " ".join(filtered)
 
-def extract_sections_as_json(file_bytes, spacing_threshold=20):
+def extract_sections_as_json(file_bytes):
+    # doc = fitz.open(pdf_path)
+    doc = fitz.open(stream=file_bytes, filetype="pdf")
+    result = {}
+    current_section = None
+
+    for page in doc:
+        blocks = page.get_text("blocks")
+        blocks = [b for b in blocks if b[4].strip()]
+        blocks.sort(key=lambda b: (b[1], b[0]))  # top to bottom, left to right
+
+        for block in blocks:
+            text = block[4].strip()
+            section_key = match_standard_header(text)
+
+            if section_key:
+                current_section = section_key
+                if section_key not in result:
+                    result[section_key] = []
+            elif current_section:
+                result[current_section].append(text)
+
+    # Final cleaning + merge section text
+    for key in result:
+        result[key] = " ".join(result[key]).strip()
+
+    # Also extract topmost block as header
+    first_page_blocks = doc[0].get_text("blocks")
+    first_page_blocks = [b for b in first_page_blocks if b[4].strip()]
+    topmost = min(first_page_blocks, key=lambda b: b[1])[4].strip()
+    result["header"] = topmost
+
+    return result
+
+'''def extract_sections_as_json(file_bytes, spacing_threshold=20):
     doc = fitz.open(stream=file_bytes, filetype="pdf")
     # doc = fitz.open(pdf_path)
     page = doc[0]
@@ -84,4 +118,4 @@ def extract_sections_as_json(file_bytes, spacing_threshold=20):
         cleaned = clean_text(full_text)
         result[key] = cleaned
 
-    return result
+    return result'''
