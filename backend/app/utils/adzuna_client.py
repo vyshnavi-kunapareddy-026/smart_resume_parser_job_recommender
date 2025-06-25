@@ -1,7 +1,10 @@
 import requests
+from dotenv import load_dotenv
+load_dotenv()
+import os
 
-ADZUNA_APP_ID = "0f21ed7e"
-ADZUNA_APP_KEY = "4f343d93e7fb5264a666c8ea63ceaeba"
+ADZUNA_APP_ID = os.getenv("ADZUNA_APP_ID")
+ADZUNA_APP_KEY = os.getenv("ADZUNA_APP_KEY")
 BASE_URL = "https://api.adzuna.com/v1/api/jobs/in/search/1"  # 'in' for India
 
 def search_jobs_adzuna(role: str, location: str = "India", results_limit: int = 20, experience: str = ""):
