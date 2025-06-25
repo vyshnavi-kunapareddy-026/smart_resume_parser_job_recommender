@@ -1,35 +1,70 @@
 import json
 import os
+from sentence_transformers import SentenceTransformer, util
 
-def load_jobs(file_path="jobs.json"):
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+# Load weighted skills dictionary
+def load_weighted_skills(file_path="skills.json"):
     with open(file_path, "r") as f:
         return json.load(f)
 
-def recommend_jobs(resume_skills, job_data, top_n=5):
-    resume_skills_set = set([skill.lower() for skill in resume_skills])
-    print("Resume Skills:", resume_skills_set)  # Debug
+def recommend_jobs(resume_skills, job_data, top_n=10):
+    skill_weights = load_weighted_skills()
+    resume_skills_set = set(skill.lower() for skill in resume_skills)
+    resume_text = ", ".join(resume_skills_set)
+    resume_embedding = model.encode(resume_text, convert_to_tensor=True)
 
     recommendations = []
 
     for job in job_data:
-        job_skills = set([skill.lower() for skill in job.get("required_skills", [])])
-        matched_skills = resume_skills_set & job_skills
-        # print(f"\nJob: {job['title']}")
-        # print("Job Skills:", job_skills)
-        # print("Matched:", matched_skills)
+        job_description = job.get("description", "")
+        job_embedding = model.encode(job_description, convert_to_tensor=True)
 
-        if matched_skills:
-            match_score = round((len(matched_skills) / len(job_skills)) * 100, 2)
-            recommendations.append({
-                "title": job.get("title"),
-                "company": job.get("company"),
-                "location": job.get("location", "N/A"),
-                "match_score": match_score,
-                "matched_skills": list(matched_skills),
-                "total_required_skills": len(job_skills),
-                "total_matched_skills": len(matched_skills)
-            })
+        # Semantic similarity
+        semantic_score = util.pytorch_cos_sim(resume_embedding, job_embedding).item()
+        semantic_score_pct = round(semantic_score * 100, 2)
+
+        # Weighted skill match
+        job_skills = set()
+        job_description_lower = job_description.lower()
+        weighted_score = 0
+        total_weight = 0
+
+        for skill in resume_skills_set:
+            if skill in job_description_lower:
+                weight = skill_weights.get(skill, 0.5)  # default weight = 0.5 if not listed
+                weighted_score += weight
+            total_weight += skill_weights.get(skill, 0.5)
+
+        weighted_match_pct = round((weighted_score / total_weight) * 100, 2) if total_weight else 0
+
+        # Hybrid score
+        final_score = round((0.7 * semantic_score_pct) + (0.3 * weighted_match_pct), 2)
+
+        # Formatting
+        matched_skills = [skill for skill in resume_skills_set if skill in job_description_lower]
+        missing_skills = [skill for skill in job_description_lower.split() if skill in skill_weights and skill not in resume_skills_set]
+
+        company = job.get("company")
+        company_name = company if isinstance(company, str) else company.get("display_name", "Unknown")
+
+        location = job.get("location")
+        location_name = location if isinstance(location, str) else location.get("display_name", "N/A")
+
+        recommendations.append({
+            "title": job.get("title"),
+            "company": company_name,
+            "location": location_name,
+            "job_url": job.get("redirect_url"),
+            "salary_min": job.get("salary_min"),
+            "description": job_description,
+            "semantic_relevance": semantic_score_pct,
+            "weighted_skill_match": weighted_match_pct,
+            "match_score": final_score,
+            "matched_skills": matched_skills,
+            "missing_skills": missing_skills
+        })
 
     recommendations.sort(key=lambda x: x["match_score"], reverse=True)
     return recommendations[:top_n]
-
